@@ -21,14 +21,32 @@ def runner(config):
 
 
 @pytest.fixture
-def create(tmpdir):
-    def inner(name, content):
-        tmpdir.join('default').join(name).write(
+def generate():
+    def inner(content):
+        return (
             'BEGIN:VCALENDAR\n'
             'BEGIN:VTODO\n' +
             content +
             'END:VTODO\n'
             'END:VCALENDAR'
         )
+    return inner
 
+
+@pytest.fixture
+def create(tmpdir, generate):
+    def inner(name, content):
+        tmpdir.join('default').join(name).write(generate(content))
+
+    return inner
+
+
+@pytest.fixture
+def compare(tmpdir, generate):
+    """
+    Checks that file `name` contains the expected content, `content`.
+    """
+    def inner(name, content):
+        actual = tmpdir.join('default').join(name).read()
+        return actual == generate(content) + "\n"
     return inner
